@@ -1,24 +1,135 @@
-# Compiled class file
-*.class
 
-# Log file
-*.log
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ylano STL Viewer</title>
 
-# BlueJ files
-*.ctxt
+  <!-- Neon font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: #0b0f1a;
+      color: white;
+      text-align: center;
+      overflow: hidden;
+    }
 
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+    h1 {
+      color: #00ffff;
+      text-shadow: 0 0 20px #00ffff;
+      margin: 20px 0;
+    }
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+    #viewer {
+      width: 100vw;
+      height: 75vh;
+    }
+
+    .controls {
+      margin: 15px;
+    }
+
+    input {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #00ffff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    footer {
+      color: #aaa;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🖨️ Ylano STL Viewer</h1>
+
+<div class="controls">
+  <input type="file" id="fileInput" accept=".stl">
+</div>
+
+<div id="viewer"></div>
+
+<footer>
+  Upload een STL → sleep om te draaien → scroll om te zoomen
+</footer>
+
+
+<!-- ===== THREE.JS LIBRARIES ===== -->
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://unpkg.com/three@0.160.0/examples/js/loaders/STLLoader.js"></script>
+
+<script>
+let scene, camera, renderer, controls, mesh;
+
+init();
+
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0f1a);
+
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 80, 120);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight * 0.75);
+  document.getElementById("viewer").appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+
+  const light1 = new THREE.DirectionalLight(0x00ffff, 1.2);
+  light1.position.set(1, 1, 1);
+  scene.add(light1);
+
+  const light2 = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(light2);
+
+  animate();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+/* ===== STL Upload ===== */
+
+document.getElementById("fileInput").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    const loader = new THREE.STLLoader();
+    const geometry = loader.parse(event.target.result);
+
+    geometry.center();
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x00ffff,
+      metalness: 0.4,
+      roughness: 0.2
+    });
+
+    if (mesh) scene.remove(mesh);
+
+    mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+  };
+
+  reader.readAsArrayBuff
